@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>縦書きエディタ</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: "Yu Gothic", "Hiragino Kaku Gothic Pro", "Meiryo", "MS PGothic", sans-serif;
+        }
+        body {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .editor {
+            width: 84%;
+            height: 100%;
+            border: 1px solid #000;
+            padding: 50px 10px; /* 上下に50px、左右に10pxの余白を追加 */
+            box-sizing: border-box;
+            background-color: #fff;
+            overflow-y: auto;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-size: 20px;
+            position: relative;
+            color: #000;
+        }
+        .title {
+            width: 16%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            background-color: #e0e0e0;
+            border-left: 1px solid #000;
+            padding: 10px;
+            box-sizing: border-box;
+            color: #000;
+        }
+        .char-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px;
+            border: 1px solid #000;
+            font-size: 14px;
+        }
+        .settings-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border: 1px solid #000;
+            z-index: 1000;
+        }
+        .settings-panel label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .settings-panel input {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-panel">
+        <label for="bgColor">背景色:</label>
+        <input type="color" id="bgColor" name="bgColor" value="#ffffff">
+        <label for="textColor">文字色:</label>
+        <input type="color" id="textColor" name="textColor" value="#000000">
+        <label for="fontSize">フォントサイズ:</label>
+        <input type="number" id="fontSize" name="fontSize" value="20" min="10" max="50">
+    </div>
+    <div class="editor" contenteditable="true">
+        <!-- ここに編集するテキストが入ります -->
+    </div>
+    <div class="title" contenteditable="true">
+        タイトル
+    </div>
+    <div class="char-count" id="charCount">文字数: 0</div>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const editor = document.querySelector('.editor');
+            const title = document.querySelector('.title');
+            const charCountDisplay = document.getElementById('charCount');
+            const bgColorInput = document.getElementById('bgColor');
+            const textColorInput = document.getElementById('textColor');
+            const fontSizeInput = document.getElementById('fontSize');
+            const body = document.body;
+
+            // 初回ロード時にローカルストレージからデータを復元
+            editor.innerHTML = localStorage.getItem('editorContent') || '';
+            title.innerHTML = localStorage.getItem('titleContent') || 'タイトル';
+
+            // カスタマイズ設定の復元
+            const savedBgColor = localStorage.getItem('bgColor');
+            const savedTextColor = localStorage.getItem('textColor');
+            const savedFontSize = localStorage.getItem('fontSize');
+
+            if (savedBgColor) {
+                editor.style.backgroundColor = savedBgColor;
+                bgColorInput.value = savedBgColor;
+            }
+            if (savedTextColor) {
+                editor.style.color = savedTextColor;
+                textColorInput.value = savedTextColor;
+            }
+            if (savedFontSize) {
+                editor.style.fontSize = savedFontSize + 'px';
+                fontSizeInput.value = savedFontSize;
+            }
+
+            function updateCharCount() {
+                const text = editor.innerText;
+                const charCount = text.length;
+                charCountDisplay.textContent = `文字数: ${charCount}`;
+            }
+
+            function saveContent() {
+                localStorage.setItem('editorContent', editor.innerHTML);
+                localStorage.setItem('titleContent', title.innerHTML);
+                console.log('Content saved!');
+            }
+
+            function applySettings() {
+                const bgColor = bgColorInput.value;
+                const textColor = textColorInput.value;
+                const fontSize = fontSizeInput.value;
+
+                editor.style.backgroundColor = bgColor;
+                editor.style.color = textColor;
+                editor.style.fontSize = fontSize + 'px';
+
+                // 設定をローカルストレージに保存
+                localStorage.setItem('bgColor', bgColor);
+                localStorage.setItem('textColor', textColor);
+                localStorage.setItem('fontSize', fontSize);
+            }
+
+            // エディタ内容が変更されたときに文字数を更新
+            editor.addEventListener('input', () => {
+                updateCharCount();
+                saveContent();
+            });
+
+            // タイトル内容が変更されたときに保存
+            title.addEventListener('input', saveContent);
+
+            // カスタマイズ設定の変更を監視
+            bgColorInput.addEventListener('input', applySettings);
+            textColorInput.addEventListener('input', applySettings);
+            fontSizeInput.addEventListener('input', applySettings);
+
+            // 定期的に自動保存
+            setInterval(saveContent, 10000); // 10秒ごとに保存
+
+            // ページ読み込み時に文字数を更新
+            updateCharCount();
+        });
+    </script>
+</body>
+</html>
